@@ -8,40 +8,17 @@
     --dark-bg: #0f172a;
     --card-bg: #1e293b;
     --border: #334155;
-    --text-main: #1f2937 !important;
-    /* FORCE DARK TEXT */
-    --text-muted: #6b7280 !important;
-    /* FORCE VISIBLE GRAY */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
 }
 
 /* Global Theme - Dark & Modern */
 body {
     background-color: var(--dark-bg);
-    color: #1f2937 !important;
-    /* FORCE DARK TEXT ON LIGHT BG */
+    color: var(--text-main);
     margin: 0;
     padding: 0;
     line-height: 1.6;
-}
-
-/* CRITICAL: Force dark text on all headers */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    color: #111827 !important;
-}
-
-/* CRITICAL: Force dark text on labels */
-label {
-    color: #374151 !important;
-}
-
-/* CRITICAL: Force dark text on paragraphs */
-p {
-    color: #1f2937 !important;
 }
 
 /* --- FORMS & INPUTS --- */
@@ -55,19 +32,15 @@ textarea,
 select {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid #64748b !important;
-    color: #1f2937 !important;
-    /* DARK TEXT FOR READABILITY */
+    color: var(--text-main) !important;
     padding: 10px 12px;
     border-radius: 6px;
     font-size: 1rem;
     outline: none;
     transition: all 0.2s ease;
     width: 100%;
-    /* Force width in containers */
     box-sizing: border-box;
-    /* Fix padding issues */
     appearance: none;
-    /* Removes default OS styling for dropdowns */
 }
 
 /* Force remove browser autocomplete yellow background */
