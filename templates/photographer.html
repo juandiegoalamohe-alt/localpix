@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Fotógrafo - LocalPix</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% include 'theme_loader.html' %}
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui;
+            background: var(--dark-bg);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--surface);
+            padding: 50px;
+            margin: 20px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: var(--secondary);
+            color: var(--on-secondary);
+        }
+
+        .processing {
+            background: var(--accent);
+            color: var(--on-accent);
+        }
+
+        .error {
+            background: var(--error);
+            color: white;
+        }
+
+        #preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .preview-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        button {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="global-header">
+            <div class="header-brand">
+                {% if theme and theme.logo_url %}
+                <img src="{{ theme.logo_url }}" class="brand-logo" alt="Logo">
+                {% else %}
+                <h1>📸 Panel del Fotógrafo</h1>
+                {% endif %}
+            </div>
+            <nav class="header-nav">
+                <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-muted); margin-right: 10px;">{{
+                    user.username }}</span>
+                <button onclick="window.location.href='/'" class="btn-nav">🏠 Inicio</button>
+                <button onclick="window.location.href='/logout'" class="btn-nav danger">🚪 Salir</button>
+            </nav>
+        </header>
+        <p>Sube las fotos de la sesión. El sistema detectará las caras automáticamente.</p>
+
+        <div
+            style="background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 40px; justify-content: center; align-items: center; border: 1px solid var(--surface); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="text-align:center;">
+                <div
+                    style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">
+                    Fecha Sesión</div>
+                <div id="displayDate" style="font-size:1.4rem; font-weight:bold; color:var(--text-main);">--</div>
+            </div>
+            <div style="width:1px; height:40px; background:var(--surface)"></div>
+            <div style="text-align:center;">
+                <div
+                    style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">
+                    Fotógrafo</div>
+                <div style="font-size:1.4rem; font-weight:bold; color:var(--secondary);">{{ user.username }}</div>
+            </div>
+        </div>
+
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p>📁 Haz clic o arrastra fotos aquí</p>
+            <input type="file" id="fileInput" multiple accept="image/*" style="display: none">
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div id="controls" style="display: none;">
+            <p>Se han seleccionado <span id="count">0</span> fotos.</p>
+            <button id="processBtn" onclick="processAndUpload()">🚀 Subir y Procesar</button>
+        </div>
+
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        const statusEl = document.getElementById('status');
+        const MODEL_URL = '/static/models';
+
+        async function loadPhotographers() {
+            try {
+                const res = await fetch('/api/photographers');
+                const users = await res.json();
+                const select = document.getElementById('photographerInput');
+                select.innerHTML = '<option value="" disabled selected>Selecciona tu nombre...</option>';
+
+                if (users.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.text = "No hay fotógrafos (Crea uno en Admin)";
+                    opt.disabled = true;
+                    select.add(opt);
+                } else {
+                    users.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u;
+                        opt.text = u;
+                        select.add(opt);
+                    });
+                }
+            } catch (e) { console.error("Error loading photographers:", e); }
+        }
+
+        async function loadModels() {
+            statusEl.style.display = 'block';
+            statusEl.className = 'status processing';
+            statusEl.textContent = 'Inicializando motor de IA (esto toma unos segundos)...';
+
+            try {
+                if (typeof faceapi === 'undefined') throw new Error("La librería face-api.js no se ha cargado. Revisa tu conexión a internet.");
+
+                console.log("Cargando SSD MobileNet V1...");
+                if (faceapi.nets.ssdMobilenetv1) {
+                    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                } else {
+                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL);
+                }
+
+                console.log("Cargando Landmarks...");
+                await faceapi.loadFaceLandmarkModel(MODEL_URL);
+                console.log("Cargando Recognition...");
+                await faceapi.loadFaceRecognitionModel(MODEL_URL);
+
+                statusEl.style.display = 'none';
+                console.log("Modelos cargados correctamente");
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = 'Error iniciando IA: ' + e.message;
+                statusEl.className = 'status error';
+            }
+        }
+
+        window.onload = () => {
+            loadModels();
+            // loadPhotographers(); // Removed
+
+            // Set Friendly Date
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('es-ES', options);
+            // Capitalize first letter
+            document.getElementById('displayDate').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        };
+
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const rawFiles = Array.from(e.target.files);
+            selectedFiles = []; // Reset
+
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            statusEl.style.display = 'block';
+            statusEl.className = 'status processing';
+            statusEl.textContent = 'Procesando archivos (convirtiendo HEIC si es necesario)...';
+
+            // Conversión HEIC
+            for (let file of rawFiles) {
+                if (file.type === "image/heic" || file.name.toLowerCase().endsWith(".heic")) {
+                    try {
+                        console.log(`Convirtiendo ${file.name} a JPEG...`);
+                        const blob = await heic2any({
+                            blob: file,
+                            toType: "image/jpeg",
+                            quality: 0.8
+                        });
+                        const newName = file.name.replace(/\.heic$/i, ".jpg");
+                        const newFile = new File([blob], newName, { type: "image/jpeg" });
+                        selectedFiles.push(newFile);
+                    } catch (err) {
+                        console.error("Error convirtiendo HEIC:", err);
+                        selectedFiles.push(file); // Fallback
+                    }
+                } else {
+                    selectedFiles.push(file);
+                }
+            }
+
+            statusEl.textContent = `${selectedFiles.length} fotos listas para subir.`;
+            document.getElementById('count').textContent = selectedFiles.length;
+            document.getElementById('controls').style.display = 'block';
+
+            selectedFiles.slice(0, 10).forEach(file => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'preview-img';
+                preview.appendChild(img);
+            });
+            if (selectedFiles.length > 10) {
+                const more = document.createElement('span');
+                more.textContent = `+ ${selectedFiles.length - 10} más...`;
+                preview.appendChild(more);
+            }
+        });
+
+        async function processAndUpload() {
+            // New Batch Logic (Chunk size 50)
+            const BATCH_SIZE = 50;
+            const btn = document.getElementById('processBtn');
+            const statusEl = document.getElementById('status');
+
+            if (selectedFiles.length === 0) return alert("No hay fotos.");
+
+            btn.disabled = true;
+            statusEl.style.display = 'block';
+            statusEl.className = 'status processing';
+            statusEl.textContent = 'Iniciando carga masiva...';
+
+            const d = new Date();
+            const dateVal = d.toISOString().split('T')[0];
+            const photogVal = "{{ user.username }}";
+
+            let grandTotal = 0;
+            const totalFiles = selectedFiles.length;
+            const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
+
+            try {
+                for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
+                    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                    const chunk = selectedFiles.slice(i, i + BATCH_SIZE);
+
+                    statusEl.textContent = `Procesando Lote ${batchNum}/${totalBatches} (${chunk.length} fotos)...`;
+
+                    const formData = new FormData();
+                    chunk.forEach(file => formData.append('photos', file));
+                    formData.append('date', dateVal);
+
+                    // Upload Batch
+                    const res = await fetch('/upload', { method: 'POST', body: formData });
+                    if (!res.ok) throw new Error("Fallo en subida del lote " + batchNum);
+
+                    const data = await res.json();
+
+                    // Process Batch
+                    const descriptors = [];
+                    statusEl.textContent = `Analizando Lote ${batchNum}...`;
+
+                    for (let j = 0; j < data.files.length; j++) {
+                        const fileObj = data.files[j];
+                        if (j % 5 === 0) await new Promise(r => setTimeout(r, 10)); // Anti-freeze
+                        statusEl.textContent = `Lote ${batchNum}: Analizando ${j + 1}/${data.files.length}`;
+
+                        try {
+                            const imgUrl = `/photos/${fileObj.path}`;
+                            const img = await faceapi.fetchImage(imgUrl);
+                            const detections = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors();
+
+                            detections.forEach(det => {
+                                descriptors.push({
+                                    image: fileObj.path,
+                                    date: dateVal,
+                                    photographer: photogVal,
+                                    descriptor: Array.from(det.descriptor)
+                                });
+                            });
+                        } catch (e) { console.error(e); }
+                    }
+
+                    // Save Descriptors
+                    if (descriptors.length > 0) {
+                        statusEl.textContent = `Guardando datos del Lote ${batchNum}...`;
+                        await fetch('/save_descriptors', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ descriptors })
+                        });
+                    }
+                    grandTotal += data.files.length;
+                }
+
+                statusEl.className = 'status success';
+                statusEl.innerHTML = `✅ ¡Finalizado! ${grandTotal} fotos procesadas.`;
+                setTimeout(() => window.location.href = '/', 2000);
+
+            } catch (e) {
+                console.error(e);
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Error: ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+    </script>
+</body>
+
+</html>

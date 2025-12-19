@@ -1,0 +1,467 @@
+{% if theme %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    /* ROOT TYPOGRAPHY & COLORS - THE SOURCE OF TRUTH */
+    * {
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    :root {
+        --primary: {
+                {
+                theme.primary or '#3b82f6'
+            }
+        }
+
+        ;
+
+        --primary-hover: {
+                {
+                theme.primary_hover or '#2563eb'
+            }
+        }
+
+        ;
+
+        --secondary: {
+                {
+                theme.secondary or '#22c55e'
+            }
+        }
+
+        ;
+
+        --dark-bg: {
+                {
+                theme.bg or '#0f172a'
+            }
+        }
+
+        ;
+
+        --card-bg: {
+                {
+                theme.card_bg or '#1e293b'
+            }
+        }
+
+        ;
+
+        --text-main: {
+                {
+                theme.text_primary or '#ffffff'
+            }
+        }
+
+        ;
+
+        --text-muted: {
+                {
+                theme.text_secondary or '#94a3b8'
+            }
+        }
+
+        ;
+
+        --surface: {
+                {
+                theme.surface or '#334155'
+            }
+        }
+
+        ;
+
+        --accent: {
+                {
+                theme.accent or '#f59e0b'
+            }
+        }
+
+        ;
+
+        --error: {
+                {
+                theme.error or '#ef4444'
+            }
+        }
+
+        ;
+
+        --success: {
+                {
+                theme.secondary or '#22c55e'
+            }
+        }
+
+        ;
+    }
+
+    body {
+        background-color: var(--dark-bg);
+        color: var(--text-main);
+        margin: 0;
+        transition: background-color 0.3s ease;
+    }
+
+    /* GLOBAL THEME OVERRIDES */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--text-main) !important;
+        font-weight: 700 !important;
+    }
+
+    /* Fix contrast on common buttons using light backgrounds in light themes */
+    button,
+    .btn {
+        transition: all 0.2s ease !important;
+    }
+
+    /* Buttons with --surface or --primary often need dynamic text color */
+    /* If the theme is light (detected by bg brightness or manually), 
+       we'd ideally calculate contrast, but for now, we force --text-main 
+       unless it's a specific high-contrast scenario */
+
+    .login-box {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--surface) !important;
+        color: var(--text-main) !important;
+    }
+
+    /* Enforce palette on common dashboard elements */
+    header,
+    .header {
+        background: var(--card-bg) !important;
+        border-bottom: 1px solid var(--surface) !important;
+    }
+
+    .sidebar,
+    aside {
+        background: var(--card-bg) !important;
+        border-right: 1px solid var(--surface) !important;
+    }
+
+    /* Standardize inputs */
+    input,
+    select,
+    textarea {
+        background: var(--dark-bg) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--surface) !important;
+        border-radius: 8px !important;
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    /* Force theme on ALL modals and overlays */
+    .modal,
+    .modal-content,
+    .cart-sidebar,
+    aside,
+    .overlay {
+        background: var(--card-bg) !important;
+        color: var(--text-main) !important;
+        border-color: var(--surface) !important;
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    /* Standardize scrollbars for theme */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--dark-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--surface);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    /* AUTOMATIC CONTRAST ENFORCEMENT */
+    button,
+    .btn,
+    .nav-btn,
+    .item-card.selected {
+        color: var(--on-primary) !important;
+        /* Default fallback */
+    }
+
+    .btn-secondary {
+        background: var(--secondary) !important;
+        color: var(--on-secondary) !important;
+    }
+
+    .btn-accent {
+        background: var(--accent) !important;
+        color: var(--on-accent) !important;
+    }
+
+    .btn-surface {
+        background: var(--surface) !important;
+        color: var(--on-surface) !important;
+    }
+
+    .nav-btn.active {
+        background: var(--primary) !important;
+        color: var(--on-primary) !important;
+    }
+
+    /* Global Text Classes */
+    .text-primary-contrast {
+        color: var(--on-primary) !important;
+    }
+
+    .text-secondary-contrast {
+        color: var(--on-secondary) !important;
+    }
+
+    .text-bg-contrast {
+        color: var(--on-bg) !important;
+    }
+
+    .text-card-contrast {
+        color: var(--on-card) !important;
+    }
+</style>
+<script>
+    // 1. Standalone Button Injector (Running immediately)
+    (function () {
+        function injectButton() {
+            if (document.getElementById('themeToggleButton')) return;
+
+            // Wait for body if not ready (rare but possible)
+            if (!document.body) {
+                setTimeout(injectButton, 50);
+                return;
+            }
+
+            const current = localStorage.getItem('themeMode') || 'light';
+            const btn = document.createElement('button');
+            btn.id = 'themeToggleButton';
+            btn.title = "Cambiar Tema (Día/Noche)";
+
+            // Inline styles with !important to prevent overrides
+            btn.style.cssText = `
+                position: fixed !important; 
+                bottom: 30px !important; 
+                right: 30px !important; 
+                background-color: ${current === 'light' ? '#2563eb' : '#f59e0b'} !important;
+                color: white !important; 
+                border: 2px solid white !important; 
+                padding: 0 !important; 
+                border-radius: 50% !important; 
+                width: 60px !important; 
+                height: 60px !important; 
+                cursor: pointer !important; 
+                font-size: 2rem !important; 
+                box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
+                z-index: 2147483647 !important; /* Max Int */
+                display: flex !important; 
+                align-items: center !important; 
+                justify-content: center !important;
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                outline: none !important;
+            `;
+
+            btn.innerHTML = '<span id="themeToggleIcon" style="pointer-events:none;">' + (current === 'dark' ? '☀️' : '🌙') + '</span>';
+
+            // Hover effects via JS since inline CSS pseudo-states are hard
+            btn.onmouseenter = () => btn.style.transform = "scale(1.15)";
+            btn.onmouseleave = () => btn.style.transform = "scale(1.0)";
+
+            btn.onclick = function () {
+                // Read fresh mode
+                const oldMode = localStorage.getItem('themeMode') || 'light';
+                const newMode = oldMode === 'dark' ? 'light' : 'dark';
+
+                // Save
+                localStorage.setItem('themeMode', newMode);
+
+                // Visual Updates
+                this.innerHTML = '<span id="themeToggleIcon" style="pointer-events:none;">' + (newMode === 'dark' ? '☀️' : '🌙') + '</span>';
+                this.style.backgroundColor = newMode === 'light' ? '#2563eb' : '#f59e0b';
+
+                // Dispatch event so the Theme Logic knows
+                window.location.reload(); // Simplest way to ensure 100% redraw without complexity
+            };
+
+            document.body.appendChild(btn);
+            console.log("✅ Theme Toggle Button Injected Successfully");
+        }
+
+        // Multiple triggers to ensure it runs
+        if (document.readyState !== 'loading') injectButton();
+        document.addEventListener('DOMContentLoaded', injectButton);
+        window.addEventListener('load', injectButton);
+        setTimeout(injectButton, 500); // Last resort fallback
+    })();
+
+    // 2. Theme Applier (Logic)
+    (function () {
+        const STORAGE_KEY_MODE = 'themeMode';
+        const STORAGE_KEY_THEME_DATA = 'themeData_';
+
+        function getStoredMode() { return localStorage.getItem(STORAGE_KEY_MODE) || 'light'; }
+
+        function getCachedTheme(mode) {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY_THEME_DATA + mode)); }
+            catch (e) { return null; }
+        }
+
+        function setCachedTheme(mode, data) {
+            try { localStorage.setItem(STORAGE_KEY_THEME_DATA + mode, JSON.stringify(data)); }
+            catch (e) { }
+        }
+
+        function getContrastColor(hex) {
+            if (!hex || hex.length < 6) return '#ffffff';
+            // Remove # if present
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#000000' : '#ffffff';
+        }
+
+        function rgbToHex(rgb) {
+            // Handle rgba format
+            const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (!match) return '#ffffff';
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        function applyThemeToDom(theme, mode) {
+            if (!theme) return;
+            const root = document.documentElement;
+
+            // Primary & Secondary
+            root.style.setProperty('--primary', theme.primary);
+            root.style.setProperty('--primary-hover', theme.primary_hover);
+            root.style.setProperty('--secondary', theme.secondary);
+
+            // Comprehensive Contrast for ALL colors
+            root.style.setProperty('--on-primary', getContrastColor(theme.primary));
+            root.style.setProperty('--on-secondary', getContrastColor(theme.secondary));
+
+            // Backgrounds
+            root.style.setProperty('--dark-bg', theme.bg);
+            root.style.setProperty('--card-bg', theme.card_bg);
+            root.style.setProperty('--on-bg', getContrastColor(theme.bg));
+            root.style.setProperty('--on-card', getContrastColor(theme.card_bg));
+
+            // Text Variables - calculate contrast for text colors too
+            root.style.setProperty('--text-main', theme.text_primary);
+            root.style.setProperty('--text-muted', theme.text_secondary);
+
+            // Extras
+            root.style.setProperty('--surface', theme.surface);
+            root.style.setProperty('--on-surface', getContrastColor(theme.surface));
+            root.style.setProperty('--accent', theme.accent);
+            root.style.setProperty('--on-accent', getContrastColor(theme.accent));
+            root.style.setProperty('--error', theme.error);
+            root.style.setProperty('--on-error', getContrastColor(theme.error));
+            root.style.setProperty('--success', theme.secondary); // Reuse secondary as success
+            root.style.setProperty('--on-success', getContrastColor(theme.secondary));
+
+            // Body overrides
+            document.body.style.backgroundColor = theme.bg;
+            document.body.style.color = getContrastColor(theme.bg);
+
+            // Apply intelligent contrast to common elements
+            applyIntelligentContrast();
+        }
+
+        function applyIntelligentContrast() {
+            // Wait for DOM to be ready
+            setTimeout(() => {
+                // Auto-contrast for headers based on their background
+                document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(el => {
+                    applyContrastToElement(el);
+                });
+
+                // Auto-contrast for labels
+                document.querySelectorAll('label').forEach(el => {
+                    applyContrastToElement(el);
+                });
+
+                // Auto-contrast for paragraphs
+                document.querySelectorAll('p').forEach(el => {
+                    applyContrastToElement(el);
+                });
+
+                // Auto-contrast for div containers with text
+                document.querySelectorAll('div[style*="background"]').forEach(el => {
+                    applyContrastToElement(el);
+                });
+
+                // Set up MutationObserver to handle dynamically added content
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.matches('h1, h2, h3, h4, h5, h6, label, p')) {
+                                    applyContrastToElement(node);
+                                }
+                                // Also check children
+                                node.querySelectorAll('h1, h2, h3, h4, h5, h6, label, p').forEach(el => {
+                                    applyContrastToElement(el);
+                                });
+                            }
+                        });
+                    });
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }, 100);
+        }
+
+        function applyContrastToElement(el) {
+            const parent = el.closest('[style*="background"]') || el.parentElement;
+            const bg = window.getComputedStyle(parent).backgroundColor;
+            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+                const hexBg = rgbToHex(bg);
+                el.style.color = getContrastColor(hexBg);
+            }
+        }
+
+        async function loadAndApplyTheme(mode) {
+            // 1. Cache
+            const cached = getCachedTheme(mode);
+            if (cached) applyThemeToDom(cached, mode);
+
+            // 2. Network
+            try {
+                const res = await fetch(`/api/theme/get/${mode}`);
+                if (!res.ok) throw new Error("API Error");
+                const theme = await res.json();
+                setCachedTheme(mode, theme);
+                applyThemeToDom(theme, mode);
+            } catch (e) {
+                console.warn("Theme API failed, relying on cache/defaults", e);
+            }
+        }
+
+        // Initialize immediately
+        const savedMode = getStoredMode();
+        loadAndApplyTheme(savedMode);
+    })();
+</script>
+{% endif %}

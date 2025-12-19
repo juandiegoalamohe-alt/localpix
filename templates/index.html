@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalPix - Tu Recuerdo Perfecto</title>
+    <style>
+        :root {
+            /* Define defaults that will be overwritten by theme_loader */
+            --primary: #2563eb;
+            --secondary: #ec4899;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #ffffff;
+            --surface: #334155;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        header {
+            background: var(--card-bg);
+            /* Use card-bg for header to distinct from body */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--surface);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-logo {
+            height: 85px;
+            /* Increased from 50px */
+            max-width: 250px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        h1 {
+            margin: 0;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 2rem;
+        }
+
+        main {
+            flex: 1;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--surface);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .card h2 {
+            color: var(--text-main);
+            margin-top: 10px;
+        }
+
+        .card p {
+            color: var(--text-muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    {% include 'theme_loader.html' %}
+</head>
+
+<body>
+    <header>
+        <div class="flex items-center gap-2">
+            {% if theme and theme.logo_url %}
+            <img src="{{ theme.logo_url }}" class="brand-logo" alt="Logo">
+            {% else %}
+            <h1>📸 LocalPix</h1>
+            {% endif %}
+        </div>
+
+        <nav style="display:flex; gap:15px; align-items:center;">
+            {% if user %}
+            <span style="font-size:1rem; color:var(--text-muted); font-weight: 500;">Hola, {{ user.username }}</span>
+            <button onclick="window.location.href='/logout'"
+                style="background:var(--error); border:none; padding:8px 20px;">Salir</button>
+            {% else %}
+            <button onclick="window.location.href='/login'"
+                style="background:var(--primary); border:none; padding:8px 20px;">Iniciar Sesión</button>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main id="app">
+        <div class="grid">
+            <!-- LOGIC: Anonymous sees all (to login). Logged in sees role-specific. -->
+
+            {% if not user or user.role in ['admin', 'supervisor'] or user.role == 'photographer' %}
+            <div class="card" onclick="window.location.href='/photographer'">
+                <span class="icon">📷</span>
+                <h2>Soy Fotógrafo</h2>
+                <p>Subir nuevas fotos al sistema</p>
+            </div>
+            {% endif %}
+
+            {% if not user or user.role in ['admin', 'supervisor'] %}
+            <div class="card" onclick="window.location.href='/client'">
+                <span class="icon">😊</span>
+                <h2>Soy Cliente</h2>
+                <p>Buscar mis fotos con mi rostro</p>
+            </div>
+            {% endif %}
+
+            {% if not user or user.role in ['admin', 'supervisor'] %}
+            <div class="card" onclick="window.location.href='/admin'">
+                <span class="icon">🛠️</span>
+                <h2>Administrador</h2>
+                <p>Gestionar carpetas y fotos</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer
+        style="margin-top: auto; padding: 2rem; border-top: 1px solid var(--surface); text-align: center; background: rgba(0,0,0,0.2);">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px;">
+            🛡️ <strong>Privacidad Asegurada:</strong> LocalPix utiliza tecnología de escaneo facial 100% local.
+            Tus datos biométricos <strong>nunca</strong> se envían ni se guardan en el servidor.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; opacity: 0.6;">&copy; 2025 LocalPix - Escaneo Seguro y
+            Privado</p>
+    </footer>
+
+    <script>
+        // Scripts simples de navegación
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Fotos - LocalPix</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% include 'theme_loader.html' %}
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        /* Base Dark Theme Overrides */
+        body {
+            background: var(--dark-bg);
+            color: var(--text-main);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Helper Utilities */
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .text-gray {
+            color: var(--text-muted);
+        }
+
+        .text-green {
+            color: #4ade80;
+        }
+
+        .text-blue {
+            color: #60a5fa;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        /* Camera Section */
+        .scanner-section {
+            background: radial-gradient(circle at center, var(--card-bg) 0%, var(--dark-bg) 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            transform: scaleX(-1);
+        }
+
+        /* Results Grid */
+        .results-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .photo-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid #334155;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: #3b82f6;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .photo-card:hover img {
+            opacity: 1;
+        }
+
+        .photo-actions {
+            padding: 15px;
+            text-align: center;
+        }
+
+        /* Cart Floating Sidebar */
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100vh;
+            background: var(--card-bg, #1e293b);
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--surface, #334155);
+        }
+
+        .cart-sidebar.open {
+            right: 0;
+        }
+
+        .cart-header {
+            padding: 20px;
+            background: var(--dark-bg);
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .cart-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .cart-footer {
+            padding: 20px;
+            background: var(--dark-bg);
+            border-top: 1px solid var(--surface);
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .btn-green {
+            background: var(--secondary, #22c55e);
+        }
+
+        .btn-green:hover {
+            opacity: 0.9;
+        }
+
+        .badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        /* Product Selector Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .product-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-option:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="global-header" style="margin-bottom: 30px; border-radius: 0 0 20px 20px; width: 100%;">
+        <div class="header-brand">
+            {% if theme and theme.logo_url %}
+            <img src="{{ theme.logo_url }}" class="brand-logo" alt="Logo">
+            {% else %}
+            <span style="font-size: 1.5rem;">📸</span>
+            <span style="font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em;">LocalPix Store</span>
+            {% endif %}
+        </div>
+        <nav class="header-nav">
+            <button class="btn-nav" id="view-cart-btn"
+                onclick="document.querySelector('.cart-sidebar').classList.add('open')">
+                🛒 Carrito (<span id="cart-count">0</span>)
+            </button>
+            <button class="btn-nav" style="background: var(--surface); border-color: var(--surface);"
+                onclick="window.location.href='/'">🏠 Inicio</button>
+        </nav>
+    </header>
+
+    <!-- Scanner StepRefactored -->
+    <div id="step-scanner" class="fade-in">
+        <section class="scanner-section">
+            <h1 style="margin-bottom: 20px;">Encuentra tus Fotos</h1>
+
+            <div style="margin-bottom: 10px;">
+                <select id="camSelector" onchange="startCamera(this.value)"
+                    style="padding: 8px 15px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: white; cursor: pointer;">
+                    <option value="">Cargando cámaras...</option>
+                </select>
+            </div>
+
+            <div class="camera-container">
+                <video id="video" autoplay muted playsinline></video>
+            </div>
+            <div class="flex justify-center gap-4" style="margin-top: 20px;">
+                <button class="btn btn-green" onclick="scanFace()">➕ Agregar Rostro</button>
+                <button class="btn" onclick="performSearch()">🔍 Buscar Fotos</button>
+            </div>
+            <div id="scanned-faces" class="flex justify-center gap-2" style="margin-top: 15px; min-height: 40px;"></div>
+            <div
+                style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 10px; margin: 15px auto; max-width: 450px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2rem;">🛡️</span>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); text-align: left; line-height: 1.4;">
+                    <strong>Escaneo Seguro:</strong> Tu rostro se procesa solo en esta ventana.
+                    No guardamos datos biométricos en la nube.
+                </p>
+            </div>
+            <p id="msg" class="text-sm text-gray" style="margin-top: 10px;">Cargando IA...</p>
+        </section>
+    </div>
+
+    <!-- Results Step -->
+    <div id="step-results" style="display: none;" class="fade-in">
+        <div class="flex justify-between items-center p-4"
+            style="background: var(--card-bg); margin-bottom: 20px; border-bottom: 1px solid var(--surface);">
+            <button onclick="showScanner()" class="btn"
+                style="background:transparent; border:1px solid var(--surface); color:var(--text-muted)">⬅ Volver al
+                Escáner</button>
+            <h2 style="margin:0; color:var(--text-main);">Resultados (<span id="result-count">0</span>)</h2>
+            <div style="width:100px"></div> <!-- Spacer -->
+        </div>
+
+        <div class="results-container">
+            <div id="gallery" class="results-grid"></div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <aside class="cart-sidebar">
+        <div class="cart-header flex justify-between items-center">
+            <h2>Tu Carrito</h2>
+            <button onclick="document.querySelector('.cart-sidebar').classList.remove('open')"
+                style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div class="cart-items" id="cart-list">
+            <p class="text-gray text-center" style="margin-top: 20px;">Tu carrito está vacío</p>
+        </div>
+        <div class="cart-footer">
+            <div class="flex justify-between" style="margin-bottom: 10px;">
+                <span>Subtotal:</span>
+                <span id="cart-subtotal">S/. 0.00</span>
+            </div>
+            <div id="cart-discount"></div> <!-- Placeholder for Discount Row -->
+            <div class="flex gap-2" style="margin-bottom: 15px;">
+                <input type="text" id="couponCode" placeholder="CUPÓN"
+                    style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--surface); background: var(--dark-bg); color: var(--text-main);">
+                <button onclick="applyCoupon()" class="btn" style="padding: 8px 12px;">Aplicar</button>
+            </div>
+            <div class="flex justify-between font-bold" style="font-size: 1.2rem; margin-bottom: 20px;">
+                <span>Total:</span>
+                <span id="cart-total" class="text-green">S/. 0.00</span>
+            </div>
+            <button class="btn btn-green" style="width: 100%; padding: 15px;" onclick="checkout()">✨ PAGAR Y
+                DESCARGAR</button>
+        </div>
+    </aside>
+
+    <!-- Product Picker Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h2>Elige el formato</h2>
+            <img id="modalImg" src=""
+                style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; margin: 10px 0;">
+            <div id="productOptions"></div>
+            <button class="btn" style="background: #475569; margin-top: 20px;" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Pretty Preview Modal -->
+    <div id="previewModal" class="modal-overlay"
+        style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(0,0,0,0.92); position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 99999; display: none; align-items: center; justify-content: center; margin: 0; padding: 0;">
+        <div
+            style="position: relative; max-width: 95vw; max-height: 95vh; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+            <button onclick="closePreview()"
+                style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 2rem; cursor: pointer; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 100001; transition: all 0.2s;">&times;</button>
+            <img id="previewImg" src=""
+                style="max-width: 90%; max-height: 90%; border-radius: 15px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); object-fit: contain;">
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        let PRODUCTS = []; // Fetched from API
+        let CART = []; // Array of { photo: path, product: productObj }
+        let FOUND_PHOTOS = []; // Paths
+        let COUPON = null;
+
+        // --- INIT ---
+        const video = document.getElementById('video');
+        const MODEL_URL = '/static/models';
+        let database = [];
+        let scannedFaces = [];
+
+        window.onload = async () => {
+            await Promise.all([loadModels(), loadDatabase(), loadProducts()]);
+            await startCamera(); // Start default & Prompt Perms
+            await getCameras();  // Enumerate inputs
+        };
+
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products_public');
+                PRODUCTS = await res.json();
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadDatabase() {
+            const res = await fetch('/get_database');
+            if (res.ok) database = await res.json();
+        }
+
+        async function loadModels() {
+            try {
+                if (typeof faceapi === 'undefined') throw new Error("No FaceAPI");
+                await faceapi.loadSsdMobilenetv1Model(MODEL_URL);
+                await faceapi.loadFaceLandmarkModel(MODEL_URL);
+                await faceapi.loadFaceRecognitionModel(MODEL_URL);
+                document.getElementById('msg').textContent = "Listo para escanear.";
+            } catch (e) { document.getElementById('msg').textContent = "Error IA: " + e.message; }
+        }
+
+        async function getCameras() {
+            const sel = document.getElementById('camSelector');
+            sel.innerHTML = '';
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevs = devices.filter(d => d.kind === 'videoinput');
+
+                videoDevs.forEach((d, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = d.deviceId;
+                    opt.text = d.label || `Cámara ${i + 1}`;
+                    sel.appendChild(opt);
+                });
+
+                if (currentStream) {
+                    const track = currentStream.getVideoTracks()[0];
+                    if (track) {
+                        const settings = track.getSettings();
+                        if (settings.deviceId) sel.value = settings.deviceId;
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        let currentStream = null;
+
+        async function startCamera(deviceId = null) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+            }
+
+            const constraints = {
+                video: deviceId ? { deviceId: { exact: deviceId } } : true
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                video.srcObject = stream;
+            } catch (e) { alert("Error cámara: " + e.message); }
+        }
+
+        // --- FACE SCAN ---
+        async function scanFace() {
+            const msg = document.getElementById('msg');
+            msg.textContent = 'Analizando...';
+            const det = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+
+            if (!det) { msg.textContent = 'No detecto rostro'; return; }
+
+            // Capture thumb
+            const canvas = document.createElement('canvas');
+            canvas.width = 100; canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 100, 100);
+
+            scannedFaces.push({ descriptor: det.descriptor, thumb: canvas.toDataURL() });
+            renderFaces();
+            msg.textContent = `Rostro agregado (${scannedFaces.length})`;
+        }
+
+        function renderFaces() {
+            const div = document.getElementById('scanned-faces');
+            div.innerHTML = scannedFaces.map((f, i) => `
+                <div onclick="scannedFaces.splice(${i},1); renderFaces()" style="cursor:pointer; position:relative">
+                    <img src="${f.thumb}" style="width:40px; height:40px; border-radius:50%; border:2px solid #4ade80">
+                    <span class="badge">x</span>
+                </div>
+            `).join('');
+        }
+
+        function performSearch() {
+            if (scannedFaces.length === 0) return alert("Agrega al menos un rostro");
+            document.getElementById('msg').textContent = "Buscando coincidencias...";
+
+            const matches = new Map(); // Use Map to avoid duplicates and store metadata
+            database.forEach(rec => {
+                for (let scan of scannedFaces) {
+                    if (faceapi.euclideanDistance(scan.descriptor, rec.descriptor) < 0.55) {
+                        matches.set(rec.image, rec.photographer || 'Desconocido');
+                        break;
+                    }
+                }
+            });
+
+            FOUND_PHOTOS = Array.from(matches.entries()).map(([path, ph]) => ({ path, photographer: ph }));
+            renderGallery(FOUND_PHOTOS);
+
+            // Switch View
+            document.getElementById('step-scanner').style.display = 'none';
+            document.getElementById('step-results').style.display = 'block';
+            document.getElementById('result-count').textContent = FOUND_PHOTOS.length;
+        }
+
+        function showScanner() {
+            document.getElementById('step-results').style.display = 'none';
+            document.getElementById('step-scanner').style.display = 'block';
+            document.getElementById('msg').textContent = "Listo para escanear.";
+        }
+
+        // --- GALLERY & SHOP ---
+        function renderGallery(photos) {
+            const gal = document.getElementById('gallery');
+            gal.innerHTML = '';
+
+            photos.forEach(item => {
+                const url = '/photos/' + item.path;
+                const div = document.createElement('div');
+                div.className = 'photo-card';
+                div.innerHTML = `
+                    <div style="position:relative; overflow:hidden;">
+                        <img src="${url}">
+                    </div>
+                    <div class="photo-actions flex justify-center gap-4">
+                        <button class="btn" style="background:var(--primary); border-radius:50%; width:45px; height:45px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;" onclick="openPreview('${url}')" title="Zoom">
+                            🔍
+                        </button>
+                        <button class="btn" style="background:var(--secondary); border-radius:50%; width:45px; height:45px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;" onclick="initAddToCart('${item.path}', '${url}', '${item.photographer}')" title="Agregar">
+                            🛒
+                        </button>
+                    </div>
+                `;
+                gal.appendChild(div);
+            });
+        }
+
+        function openPreview(url) {
+            document.getElementById('previewImg').src = url;
+            document.getElementById('previewModal').style.display = 'flex';
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        let currentSelection = null;
+
+        function initAddToCart(path, url, photographer) {
+            currentSelection = { path, url, photographer };
+            document.getElementById('modalImg').src = url;
+            const opts = document.getElementById('productOptions');
+            opts.innerHTML = '';
+
+            PRODUCTS.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'product-option';
+                row.innerHTML = `
+                    <div class="text-left">
+                        <div class="font-bold">${p.name}</div>
+                        <div class="text-sm text-gray">${p.description || ''}</div>
+                    </div>
+                    <div class="font-bold text-green">S/. ${p.price.toFixed(2)}</div>
+                `;
+                row.onclick = () => addToCart(p);
+                opts.appendChild(row);
+            });
+
+            document.getElementById('productModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+
+        function addToCart(product) {
+            const path = currentSelection.path;
+            let photographer = currentSelection.photographer;
+
+            // Double Safety Fallback: Parse from path if metadata is missing or generic
+            if (!photographer || photographer === 'Desconocido' || photographer === 'undefined' || photographer === 'null') {
+                const parts = path.replace(/\\/g, '/').split('/');
+                if (parts.length >= 2) {
+                    // check for YYYY-MM-DD/Photographer/file.jpg
+                    if (parts[0].length === 10 && parts[0][4] === '-' && parts[0][7] === '-') {
+                        photographer = parts[1];
+                    } else {
+                        photographer = parts[0];
+                    }
+                } else {
+                    photographer = 'Desconocido';
+                }
+            }
+
+            CART.push({
+                photo: path,
+                preview: currentSelection.url,
+                product: product,
+                photographer: photographer,
+                id: Date.now()
+            });
+            closeModal();
+            renderCart();
+            document.querySelector('.cart-sidebar').classList.add('open');
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            document.getElementById('cart-count').textContent = CART.length;
+
+            if (CART.length === 0) {
+                list.innerHTML = '<p class="text-gray text-center mt-4">Tu carrito está vacío</p>';
+            } else {
+                list.innerHTML = CART.map(item => `
+                    <div class="cart-item">
+                        <img src="${item.preview}">
+                        <div style="flex:1">
+                            <div class="font-bold text-sm">${item.product.name}</div>
+                            <div class="text-green text-sm">S/. ${item.product.price.toFixed(2)}</div>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 font-bold" style="background:none; border:none; cursor:pointer;">&times;</button>
+                    </div>
+                `).join('');
+            }
+            updateTotals();
+        }
+
+        function removeFromCart(id) {
+            CART = CART.filter(c => c.id !== id);
+            renderCart();
+        }
+
+        async function applyCoupon() {
+            const codeInput = document.getElementById('couponCode');
+            const code = codeInput.value.trim().toUpperCase();
+            if (!code) return alert("Ingresa un código");
+
+            try {
+                const res = await fetch('/api/validate_coupon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+
+                if (data.valid) {
+                    COUPON = data; // data includes type, value, etc.
+                    COUPON.code = code; // ensure code is stored
+                    alert(`✅ Cupón válido: ${code}\nDescuento aplicado.`);
+                    codeInput.disabled = true; // Lock input
+                    updateTotals();
+                } else {
+                    alert("❌ Error: " + data.msg);
+                    COUPON = null;
+                    updateTotals();
+                }
+            } catch (e) { console.error(e); alert("Error de conexión"); }
+        }
+
+        function updateTotals() {
+            let subtotal = CART.reduce((acc, item) => acc + item.product.price, 0);
+            let total = subtotal;
+            let discountAmount = 0;
+
+            if (COUPON) {
+                if (COUPON.type === 'percent') {
+                    discountAmount = subtotal * (COUPON.value / 100);
+                } else {
+                    // Fixed amount (default for PCM tickets)
+                    discountAmount = COUPON.value;
+                }
+                // Cap discount at subtotal (no negative price)
+                if (discountAmount > subtotal) discountAmount = subtotal;
+
+                total = subtotal - discountAmount;
+            }
+
+            document.getElementById('cart-subtotal').textContent = `S/. ${subtotal.toFixed(2)}`;
+
+            // Show discount line if applied
+            const discElem = document.getElementById('cart-discount');
+            if (COUPON) {
+                if (!discElem) {
+                    // Inject discount row if missing
+                    const footer = document.querySelector('.cart-footer');
+                    const row = document.createElement('div');
+                    row.id = 'cart-discount';
+                    row.className = 'flex justify-between text-green';
+                    row.style.marginBottom = '10px';
+                    row.innerHTML = `<span>Descuento (${COUPON.code}):</span> <span>- S/. ${discountAmount.toFixed(2)}</span>`;
+                    // Insert before Total
+                    const totalRow = document.getElementById('cart-total').parentElement;
+                    footer.insertBefore(row, totalRow);
+                } else {
+                    discElem.innerHTML = `<span>Descuento (${COUPON.code}):</span> <span>- S/. ${discountAmount.toFixed(2)}</span>`;
+                }
+            } else {
+                // If coupon is removed, ensure discount row is also removed
+                if (discElem) {
+                    discElem.remove();
+                }
+            }
+
+            document.getElementById('cart-total').textContent = `S/. ${total.toFixed(2)}`;
+        }
+
+        async function checkout() {
+            if (CART.length === 0) return alert("Tu carrito está vacío");
+
+            const payload = {
+                items: CART.map(c => ({
+                    path: c.photo,
+                    product_name: c.product.name,
+                    product_id: c.product.id,
+                    price: c.product.price,
+                    photographer: c.photographer,
+                    product_type: c.product.type || 'digital'
+                })),
+                total: CART.reduce((acc, item) => acc + item.product.price, 0),
+                discount_code: COUPON ? COUPON.code : null,
+                final_total: CART.reduce((acc, item) => acc + item.product.price, 0) - (COUPON ? (COUPON.type === 'percent' ? CART.reduce((acc, item) => acc + item.product.price, 0) * (COUPON.value / 100) : COUPON.value) : 0)
+            };
+
+            try {
+                const res = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`¡Pago Exitoso! ID Venta: #${data.sale_id}\n\nTus fotos se descargarán ahora.`);
+
+                    // Trigger downloads for digital items
+                    CART.forEach(item => {
+                        // Create invisible temporary links
+                        const link = document.createElement('a');
+                        link.href = item.preview;
+                        link.download = item.photo.split('/').pop();
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+
+                    CART = [];
+                    COUPON = null;
+                    renderCart();
+                    document.querySelector('.cart-sidebar').classList.remove('open');
+                } else {
+                    const err = await res.json();
+                    alert("Error procesando pago: " + (err.error || "Desconocido"));
+                }
+            } catch (e) { console.error(e); alert("Error de red"); }
+        }
+
+    </script>
+</body>
+
+</html>

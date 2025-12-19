@@ -1,0 +1,642 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --dark-bg: #0f172a;
+    --card-bg: #1e293b;
+    --border: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+/* Global Theme - Dark & Modern */
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* --- FORMS & INPUTS --- */
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid #64748b !important;
+    color: white !important;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    /* Force width in containers */
+    box-sizing: border-box;
+    /* Fix padding issues */
+    appearance: none;
+    /* Removes default OS styling for dropdowns */
+}
+
+/* Force remove browser autocomplete yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(30, 41, 59, 1) inset !important;
+    -webkit-text-fill-color: white !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: #64748b !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Add custom arrow for selects since we removed appearance */
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+    padding-right: 40px;
+}
+
+select option {
+    background-color: #1e293b;
+    color: white;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* --- BUTTONS --- */
+button,
+.btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+button:hover,
+.btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(110%);
+}
+
+button:active,
+.btn:active {
+    transform: translateY(0);
+    filter: brightness(95%);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-success,
+.btn-green {
+    background: var(--success);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-blue {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa !important;
+    border: 1px solid #3b82f6;
+}
+
+.badge-orange {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c !important;
+    border: 1px solid #f97316;
+}
+
+.badge-purple {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa !important;
+    border: 1px solid #8b5cf6;
+}
+
+.badge-red {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171 !important;
+    border: 1px solid #ef4444;
+}
+
+.badge-green {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80 !important;
+    border: 1px solid #22c55e;
+}
+
+/* --- MODALS --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 10000 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    animation: modalPop 0.3s ease-out;
+}
+
+@keyframes modalPop {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* --- UTILITIES --- */
+.flex {
+    display: flex;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-center {
+    align-items: center;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* --- TOGGLE SWITCH (Large) --- */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #475569;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #22c55e;
+}
+
+input:checked+.slider:before {
+    transform: translateX(30px);
+}
+
+/* --- BRANDING --- */
+.brand-logo {
+    height: 60px;
+    /* Fixed height for consistency */
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.brand-logo:hover {
+    transform: scale(1.05);
+}
+
+/* --- GLOBAL LAYOUT SYSTEM --- */
+.global-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--surface);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    height: 90px;
+    box-sizing: border-box;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-brand h1 {
+    font-size: 1.4rem;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* --- STANDARDIZED BUTTONS --- */
+.btn-nav {
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--surface);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-nav:hover {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.3);
+}
+
+.btn-nav.danger:hover {
+    background: var(--error);
+    border-color: var(--error);
+    color: white;
+}
+
+/* --- ALIGNMENT & FORM HELPERS --- */
+.form-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid var(--surface);
+    margin-bottom: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+    margin-bottom: 0 !important;
+    /* Reset legacy margins */
+    height: 45px;
+}
+
+/* Ensure all inputs in modals have consistent height */
+#userModal input[type="text"],
+#userModal input[type="email"],
+#userModal input[type="tel"],
+#userModal input[type="password"],
+#userModal select {
+    height: 45px !important;
+    min-height: 45px;
+}
+
+/* Make form groups in modals symmetric */
+#userModal .form-group {
+    margin-bottom: 15px;
+}
+
+#userModal .form-group label {
+    min-height: 20px;
+    display: block;
+}
+
+/* ========================================
+   UNIVERSAL AUTOMATIC CONTRAST SYSTEM
+   ======================================== */
+
+/* Background Helper Classes with Auto-Contrast */
+.bg-primary {
+    background-color: var(--primary) !important;
+    color: var(--on-primary) !important;
+}
+
+.bg-secondary {
+    background-color: var(--secondary) !important;
+    color: var(--on-secondary) !important;
+}
+
+.bg-card {
+    background-color: var(--card-bg) !important;
+    color: var(--on-card) !important;
+}
+
+.bg-surface {
+    background-color: var(--surface) !important;
+    color: var(--on-surface) !important;
+}
+
+.bg-accent {
+    background-color: var(--accent) !important;
+    color: var(--on-accent) !important;
+}
+
+.bg-error {
+    background-color: var(--error) !important;
+    color: var(--on-error) !important;
+}
+
+.bg-success {
+    background-color: var(--success) !important;
+    color: var(--on-success) !important;
+}
+
+/* Auto-Contrast for Headers */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    /* Will be dynamically set by JavaScript, but provide fallback */
+    color: var(--on-card);
+}
+
+/* Force contrast on inline background styles */
+[style*="background: var(--primary)"],
+[style*="background-color: var(--primary)"] {
+    color: var(--on-primary) !important;
+}
+
+[style*="background: var(--secondary)"],
+[style*="background-color: var(--secondary)"] {
+    color: var(--on-secondary) !important;
+}
+
+[style*="background: var(--card-bg)"],
+[style*="background-color: var(--card-bg)"] {
+    color: var(--on-card) !important;
+}
+
+[style*="background: var(--surface)"],
+[style*="background-color: var(--surface)"] {
+    color: var(--on-surface) !important;
+}
+
+[style*="background: var(--accent)"],
+[style*="background-color: var(--accent)"] {
+    color: var(--on-accent) !important;
+}
+
+/* Buttons - Auto Contrast */
+button,
+.btn,
+.btn-nav {
+    /* Default uses surface */
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+button:hover,
+.btn:hover,
+.btn-nav:hover {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+.btn-primary,
+[style*="background: var(--primary)"][role="button"],
+[onclick] {
+    background: var(--primary);
+    color: var(--on-primary) !important;
+}
+
+.btn-success,
+.btn-green {
+    background: var(--success);
+    color: var(--on-success) !important;
+}
+
+.btn-danger {
+    background: var(--error);
+    color: var(--on-error) !important;
+}
+
+/* Badges - Universal Contrast */
+.badge {
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+.badge.promo,
+.badge-primary {
+    background: var(--primary);
+    color: var(--on-primary) !important;
+}
+
+.badge.digital,
+.badge-blue {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa !important;
+    border: 1px solid #3b82f6;
+}
+
+.badge.print,
+.badge-orange {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c !important;
+    border: 1px solid #f97316;
+}
+
+/* Cards and Containers */
+.card,
+[style*="border-radius"][style*="padding"] {
+    background: var(--card-bg);
+    color: var(--on-card);
+}
+
+/* Tables */
+.data-table th {
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+.data-table td {
+    color: var(--on-card);
+}
+
+/* Form Labels - Always readable on their container */
+label {
+    color: var(--text-muted);
+}
+
+/* Ensure header nav elements have proper contrast */
+.header-nav button,
+.header-nav .btn-nav {
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+.header-nav button:hover {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+/* Sidebar navigation */
+.sidebar-nav button,
+.nav-btn {
+    background: transparent;
+    color: var(--on-card);
+}
+
+.sidebar-nav button.active,
+.nav-btn.active {
+    background: var(--primary) !important;
+    color: var(--on-primary) !important;
+}
+
+/* Status messages and toasts */
+.status-msg,
+#toast {
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+/* Ensure paragraph text is always readable */
+p {
+    color: var(--on-card);
+}
+
+/* Links should be visible */
+a {
+    color: var(--primary);
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
