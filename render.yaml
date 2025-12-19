@@ -2,6 +2,7 @@ services:
   - type: web
     name: localpix
     env: python
+    python_version: 3.11.0
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
     envVars:
