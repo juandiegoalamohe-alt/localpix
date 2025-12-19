@@ -8,17 +8,40 @@
     --dark-bg: #0f172a;
     --card-bg: #1e293b;
     --border: #334155;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-main: #1f2937 !important;
+    /* FORCE DARK TEXT */
+    --text-muted: #6b7280 !important;
+    /* FORCE VISIBLE GRAY */
 }
 
 /* Global Theme - Dark & Modern */
 body {
     background-color: var(--dark-bg);
-    color: var(--text-main);
+    color: #1f2937 !important;
+    /* FORCE DARK TEXT ON LIGHT BG */
     margin: 0;
     padding: 0;
     line-height: 1.6;
+}
+
+/* CRITICAL: Force dark text on all headers */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #111827 !important;
+}
+
+/* CRITICAL: Force dark text on labels */
+label {
+    color: #374151 !important;
+}
+
+/* CRITICAL: Force dark text on paragraphs */
+p {
+    color: #1f2937 !important;
 }
 
 /* --- FORMS & INPUTS --- */
