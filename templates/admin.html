@@ -436,14 +436,19 @@
 
 <body>
     <header class="global-header">
-        <div class="header-brand" id="brandLogo" onclick="handleLogoClick()" title="Configuración de Tema (Clic x5)"
-            style="cursor: pointer; user-select: none;">
-            {% if theme and theme.logo_url %}
-            <img src="{{ theme.logo_url }}" class="brand-logo" alt="Logo">
-            {% else %}
-            <span style="font-size: 1.5rem;">🛠️</span>
-            {% endif %}
-            <h1>Panel de Administración ({{ user.role|capitalize }})</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <!-- SOLO EL LOGO ES CLICKEABLE -->
+            <div id="brandLogo" onclick="handleLogoClick()" title="Configuración de Tema (Clic x5)"
+                style="cursor: pointer; user-select: none; padding: 8px; border-radius: 8px; display: inline-flex;">
+                {% if theme and theme.logo_url %}
+                <img src="{{ theme.logo_url }}" class="brand-logo" alt="Logo" style="height: 40px; width: auto;">
+                {% else %}
+                <span style="font-size: 1.5rem;">🛠️</span>
+                {% endif %}
+            </div>
+            <!-- TEXTO SIN FONDO, NO CLICKEABLE -->
+            <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Panel de Administración ({{ user.role|capitalize
+                }})</h1>
         </div>
         <nav class="header-nav">
             <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-muted); margin-right: 10px;">{{
