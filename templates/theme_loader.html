@@ -383,7 +383,8 @@
             document.body.style.color = getContrastColor(theme.bg);
 
             // Apply intelligent contrast to common elements
-            applyIntelligentContrast();
+            // DISABLED - Causes white-on-white text, CSS handles it now
+            // applyIntelligentContrast();
         }
 
         function applyIntelligentContrast() {
